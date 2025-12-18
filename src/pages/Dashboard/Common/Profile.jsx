@@ -1,207 +1,198 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
 import useAuth from "../../../hooks/useAuth";
+import useRole from "../../../hooks/useRole";
+import axios from "axios";
+
 import coverImg from "../../../assets/images/cover.jpg";
 import { toast } from "react-hot-toast";
 import { imageUploadCloudinary } from "../../../utils";
 
 const Profile = () => {
   const { user, setLoading } = useAuth();
+  const [role] = useRole();
   const [userData, setUserData] = useState({});
-  const [originalData, setOriginalData] = useState({});
-  const [editable, setEditable] = useState(false);
+  const [showModal, setShowModal] = useState(false);
   const [avatarFile, setAvatarFile] = useState(null);
 
+  // Fetch user data
   useEffect(() => {
-    const fetchUserData = async () => {
+    const fetchUser = async () => {
       try {
         const { data } = await axios.get(
-          `${import.meta.env.VITE_API_URL}/users?email=${user?.email}`
+          `${import.meta.env.VITE_API_URL}/users`
         );
-
-        const userInfo = data[0] || {};
-        setUserData({
-          ...userInfo,
-          bloodGroup: userInfo.blood_group || "",
-        });
-        setOriginalData({
-          ...userInfo,
-          bloodGroup: userInfo.blood_group || "",
-        });
+        const currentUser = data.find((u) => u.email === user?.email);
+        setUserData(currentUser);
+        setLoading(false);
       } catch (err) {
         console.error(err);
-      } finally {
         setLoading(false);
       }
     };
-    if (user?.email) fetchUserData();
-  }, [user]);
+    fetchUser();
+  }, [user?.email]);
+  console.log(userData.email)
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setUserData({ ...userData, [name]: value });
+    setUserData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleAvatarChange = (e) => {
-    setAvatarFile(e.target.files[0]);
-  };
+  const handleFileChange = (e) => setAvatarFile(e.target.files[0]);
 
-  const handleSave = async () => {
-    try {
-      const token = await user.getIdToken();
+const handleUpdate = async () => {
+  try {
+    const updatedData = {
+      name: userData.name,
+      blood_group: userData.blood_group,
+      district: userData.district,
+      upazila: userData.upazila,
+    };
 
-      const updatePayload = {};
-      if (userData.name !== originalData.name) updatePayload.name = userData.name;
-      if (userData.district !== originalData.district) updatePayload.district = userData.district;
-      if (userData.upazila !== originalData.upazila) updatePayload.upazila = userData.upazila;
-      if (userData.bloodGroup !== originalData.bloodGroup) updatePayload.blood_group = userData.bloodGroup;
-      if (avatarFile) updatePayload.avatar = await imageUploadCloudinary(avatarFile);
-
-      if (Object.keys(updatePayload).length === 0) return toast("No changes to save!");
-
-      const { data } = await axios.patch(
-        `${import.meta.env.VITE_API_URL}/users/${userData.email}`,
-        updatePayload,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      if (data.success) {
-        toast.success(data.message);
-        setEditable(false);
-        setAvatarFile(null);
-        setOriginalData({ ...userData, avatar: avatarFile ? updatePayload.avatar : userData.avatar });
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to update profile");
+    // Only upload avatar if file selected
+    if (avatarFile) {
+      const uploadedUrl = await imageUploadCloudinary(avatarFile);
+      updatedData.avatar = uploadedUrl;
     }
-  };
+
+    const res = await axios.patch(
+      `${import.meta.env.VITE_API_URL}/users/${userData.email}`,
+      updatedData
+    );
+
+    toast.success(res.data.message || "Profile updated successfully!");
+    setUserData((prev) => ({ ...prev, ...updatedData }));
+    setShowModal(false);
+  } catch (err) {
+    console.error(err.response?.data || err.message);
+    toast.error(err.response?.data?.message || "Failed to update profile");
+  }
+};
+
 
   return (
-    <div className="min-h-screen bg-red-50 flex justify-center items-start py-10 px-2">
-      <div className="bg-white shadow-xl rounded-2xl w-full max-w-3xl overflow-hidden">
-        {/* Cover Image */}
-        <div className="relative">
-          <img
-            src={coverImg}
-            alt="cover"
-            className="w-full h-48 object-cover"
-          />
-          <div className="absolute -bottom-12 left-1/2 transform -translate-x-1/2">
-            <div className="relative">
-              <img
-                src={avatarFile ? URL.createObjectURL(avatarFile) : userData?.avatar || user?.photoURL}
-                alt="avatar"
-                className="h-28 w-28 rounded-full border-4 border-white object-cover"
-              />
-              {editable && (
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleAvatarChange}
-                  className="absolute bottom-0 right-0 h-10 w-10 rounded-full border border-gray-300 bg-white p-1 cursor-pointer"
-                  title="Change Avatar"
-                />
-              )}
-            </div>
+    <div className="flex justify-center items-center min-h-screen bg-gray-100">
+      <div className="bg-white shadow-lg rounded-2xl md:w-4/5 lg:w-3/5">
+        <img
+          src={coverImg}
+          alt="cover"
+          className="w-full h-56 mb-4 rounded-t-lg object-cover"
+        />
+        <div className="flex flex-col items-center -mt-16 p-4">
+          <div className="relative">
+            <img
+              src={userData.avatar || userData.image || ""}
+              alt="profile"
+              className="h-24 w-24 rounded-full border-2 border-white object-cover"
+            />
+          </div>
+
+          <p className="p-2 px-4 mt-2 text-xs text-white bg-lime-500 rounded-full">
+            {role}
+          </p>
+
+          <div className="w-full p-2 mt-4 text-gray-600">
+            <p>
+              <strong>Name:</strong> {userData.name}
+            </p>
+            <p>
+              <strong>Email:</strong> {userData.email}
+            </p>
+            <p>
+              <strong>Blood Group:</strong> {userData.blood_group}
+            </p>
+            <p>
+              <strong>District:</strong> {userData.district}
+            </p>
+            <p>
+              <strong>Upazila:</strong> {userData.upazila}
+            </p>
+
+            <button
+              onClick={() => setShowModal(true)}
+              className="mt-4 bg-lime-500 px-6 py-1 rounded text-white hover:bg-lime-800"
+            >
+              Update Profile
+            </button>
           </div>
         </div>
+      </div>
 
-        {/* Info Form */}
-        <div className="pt-16 px-6 pb-6">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-semibold text-gray-800">Profile</h2>
-            {!editable ? (
-              <button
-                className="bg-lime-500 px-4 py-2 rounded-lg text-white hover:bg-lime-600 transition"
-                onClick={() => setEditable(true)}
-              >
-                Edit
-              </button>
-            ) : (
-              <button
-                className="bg-lime-500 px-4 py-2 rounded-lg text-white hover:bg-lime-600 transition"
-                onClick={handleSave}
-              >
-                Save
-              </button>
-            )}
-          </div>
+      {/* Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white rounded-lg w-96 p-6 relative">
+            <h2 className="text-xl font-bold mb-4">Update Profile</h2>
 
-          <form className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Name */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Name</label>
+            <div className="flex flex-col gap-3">
+              <label>Name</label>
               <input
                 type="text"
                 name="name"
-                value={userData?.name || ""}
+                value={userData.name || ""}
                 onChange={handleChange}
-                disabled={!editable}
-                className={`mt-1 block w-full border rounded-md p-2 focus:outline-none ${
-                  editable ? "border-lime-500 focus:ring focus:ring-lime-200" : "bg-gray-100 border-gray-300"
-                }`}
+                className="border rounded p-2 w-full"
               />
-            </div>
 
-            {/* Email */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Email</label>
-              <input
-                type="email"
-                value={userData?.email || ""}
-                disabled
-                className="mt-1 block w-full border border-gray-300 rounded-md p-2 bg-gray-100"
-              />
-            </div>
+              <label>Blood Group</label>
+              <select
+                name="blood_group"
+                value={userData.blood_group || ""}
+                onChange={handleChange}
+                className="border rounded p-2 w-full"
+              >
+                {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map(
+                  (bg) => (
+                    <option key={bg} value={bg}>
+                      {bg}
+                    </option>
+                  )
+                )}
+              </select>
 
-            {/* District */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">District</label>
+              <label>District</label>
               <input
                 type="text"
                 name="district"
-                value={userData?.district || ""}
+                value={userData.district || ""}
                 onChange={handleChange}
-                disabled={!editable}
-                className={`mt-1 block w-full border rounded-md p-2 ${
-                  editable ? "border-lime-500 focus:ring focus:ring-lime-200" : "bg-gray-100 border-gray-300"
-                }`}
+                className="border rounded p-2 w-full"
               />
-            </div>
 
-            {/* Upazila */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Upazila</label>
+              <label>Upazila</label>
               <input
                 type="text"
                 name="upazila"
-                value={userData?.upazila || ""}
+                value={userData.upazila || ""}
                 onChange={handleChange}
-                disabled={!editable}
-                className={`mt-1 block w-full border rounded-md p-2 ${
-                  editable ? "border-lime-500 focus:ring focus:ring-lime-200" : "bg-gray-100 border-gray-300"
-                }`}
+                className="border rounded p-2 w-full"
+              />
+
+              <label>Avatar</label>
+              <input
+                type="file"
+                onChange={handleFileChange}
+                className="border rounded p-2 w-full"
               />
             </div>
 
-            {/* Blood Group */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Blood Group</label>
-              <input
-                type="text"
-                name="bloodGroup"
-                value={userData?.bloodGroup || ""}
-                onChange={handleChange}
-                disabled={!editable}
-                className={`mt-1 block w-full border rounded-md p-2 ${
-                  editable ? "border-lime-500 focus:ring focus:ring-lime-200" : "bg-gray-100 border-gray-300"
-                }`}
-              />
+            <div className="flex justify-end gap-2 mt-4">
+              <button
+                onClick={() => setShowModal(false)}
+                className="bg-gray-400 px-4 py-1 rounded text-white hover:bg-gray-600"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleUpdate}
+                className="bg-lime-500 px-4 py-1 rounded text-white hover:bg-lime-800"
+              >
+                Save
+              </button>
             </div>
-          </form>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

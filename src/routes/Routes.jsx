@@ -10,9 +10,7 @@ import ManageUsers from "../pages/Dashboard/Admin/ManageUsers";
 import Profile from "../pages/Dashboard/Common/Profile";
 import Statistics from "../pages/Dashboard/Common/Statistics";
 import MainLayout from "../layouts/MainLayout";
-import MyInventory from "../pages/Dashboard/Seller/MyInventory";
 import ManageOrders from "../pages/Dashboard/Seller/ManageOrders";
-
 import { createBrowserRouter } from "react-router";
 import DonationRequest from "../components/Shared/MenuLinks/DonationRequest";
 import Blog from "../components/Shared/MenuLinks/Blog";
@@ -20,7 +18,7 @@ import Founding from "../components/Shared/MenuLinks/Founding";
 import MyDonationRequest from "../pages/Dashboard/Customer/MyDonationRequest";
 import SearchPage from "../components/Shared/Navbar/SearchPage";
 import DonationRequestDetails from "../components/Dashboard/DonationDetails/DonationRequestDetails";
-import PaymentSuccess from "../components/Dashboard/Payment/PaymentSuccess";
+import PaymentSuccess from '../components/Dashboard/Payment/PaymentSuccess'
 
 export const router = createBrowserRouter([
   {
@@ -45,7 +43,7 @@ export const router = createBrowserRouter([
         element: <Blog></Blog>,
       },
       {
-        path: "/founding",
+        path: "/funding",
         element: (
           <PrivateRoute>
             <Founding></Founding>
@@ -60,6 +58,12 @@ export const router = createBrowserRouter([
   path:'blog',
   element:<Blog></Blog>
 }
+,{
+      path:'payment-success',
+      element:
+        <PaymentSuccess></PaymentSuccess>
+      
+     },
     ],
   },
   {
@@ -98,10 +102,7 @@ export const router = createBrowserRouter([
           </PrivateRoute>
         ),
       },
-     {
-      path:'payment-success',
-      element:<PaymentSuccess></PaymentSuccess>
-     },
+     
 
       {
         path: "all-users",
@@ -128,13 +129,10 @@ export const router = createBrowserRouter([
           </PrivateRoute>
         ),
       },
-      // {
-      //   path: 'manage-orders',
-      //   element: <ManageOrders />,
-      // },
+      
       {
         path: "manage-orders",
-        element: <ManageOrders />,
+        element: <PrivateRoute><ManageOrders /></PrivateRoute>,
       },
     ],
   },

@@ -10,6 +10,7 @@ const Navbar = () => {
   const { user, logOut,setLoading } = useAuth()
   const [isOpen, setIsOpen] = useState(false)
   const [users, setUsers] = useState([]);
+  const [image ,setImage ]=useState({})
    // 🔹 get users from backend
   useEffect(() => {
     const getUsers = async () => {
@@ -17,6 +18,7 @@ const Navbar = () => {
         const { data } = await axios.get(
           `${import.meta.env.VITE_API_URL}/users`
         );
+        const result =data.map(d=>setImage(d.image))
         setUsers(data); // 🔥 dynamic data
         setLoading(false);
       } catch (error) {
@@ -27,7 +29,7 @@ const Navbar = () => {
 
     getUsers();
   }, []);
-// console.log(users)
+console.log(image)
   return (
 <div className='fixed w-full bg-white z-10 shadow-sm'>
   <div className='py-4'>
@@ -53,7 +55,7 @@ const Navbar = () => {
             </Link>
 
             {user && (
-              <Link to='/founding' className='hover:text-red-600 transition'>
+              <Link to='/funding' className='hover:text-red-600 transition'>
                 Funding
               </Link>
             )}
@@ -74,7 +76,7 @@ const Navbar = () => {
                 <img
                   className='rounded-full'
                   referrerPolicy='no-referrer'
-                  src={user?.photoURL ? user?.photoURL : avatarImg}
+                  src={user?.photoURL ? image : avatarImg}
                   // src={users? users?.image || user?.image :avatarImg  }
                   alt='profile'
                   height='30'
