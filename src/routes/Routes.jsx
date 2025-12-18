@@ -1,125 +1,141 @@
-import Home from '../pages/Home/Home'
-import ErrorPage from '../pages/ErrorPage'
-import Login from '../pages/Login/Login'
-import SignUp from '../pages/SignUp/SignUp'
-import PlantDetails from '../pages/PlantDetails/PlantDetails'
-import PrivateRoute from './PrivateRoute'
-import DashboardLayout from '../layouts/DashboardLayout'
-import AddPlant from '../pages/Dashboard/Seller/AddPlant'
-import ManageUsers from '../pages/Dashboard/Admin/ManageUsers'
-import Profile from '../pages/Dashboard/Common/Profile'
-import Statistics from '../pages/Dashboard/Common/Statistics'
-import MainLayout from '../layouts/MainLayout'
-import MyInventory from '../pages/Dashboard/Seller/MyInventory'
-import ManageOrders from '../pages/Dashboard/Seller/ManageOrders'
-import MyOrders from '../pages/Dashboard/Customer/MyOrders'
-import { createBrowserRouter } from 'react-router'
-import DonationRequest from '../components/Shared/MenuLinks/DonationRequest'
-import Blog from '../components/Shared/MenuLinks/Blog'
-import Founding from '../components/Shared/MenuLinks/Founding'
+import Home from "../pages/Home/Home";
+import ErrorPage from "../pages/ErrorPage";
+import Login from "../pages/Login/Login";
+import SignUp from "../pages/SignUp/SignUp";
+import PlantDetails from "../pages/donation-details/DonationRequestDetails ";
+import PrivateRoute from "./PrivateRoute";
+import DashboardLayout from "../layouts/DashboardLayout";
+import AddPlant from "../pages/Dashboard/Seller/AddPlant";
+import ManageUsers from "../pages/Dashboard/Admin/ManageUsers";
+import Profile from "../pages/Dashboard/Common/Profile";
+import Statistics from "../pages/Dashboard/Common/Statistics";
+import MainLayout from "../layouts/MainLayout";
+import MyInventory from "../pages/Dashboard/Seller/MyInventory";
+import ManageOrders from "../pages/Dashboard/Seller/ManageOrders";
+
+import { createBrowserRouter } from "react-router";
+import DonationRequest from "../components/Shared/MenuLinks/DonationRequest";
+import Blog from "../components/Shared/MenuLinks/Blog";
+import Founding from "../components/Shared/MenuLinks/Founding";
+import MyDonationRequest from "../pages/Dashboard/Customer/MyDonationRequest";
+import SearchPage from "../components/Shared/Navbar/SearchPage";
+import DonationRequestDetails from "../components/Dashboard/DonationDetails/DonationRequestDetails";
+import PaymentSuccess from "../components/Dashboard/Payment/PaymentSuccess";
 
 export const router = createBrowserRouter([
   {
-    path: '/',
+    path: "/",
     element: <MainLayout />,
     errorElement: <ErrorPage />,
     children: [
       {
-        path: '/',
+        path: "/",
         element: <Home />,
       },
       {
-        path: '/donation-request',
+        path: "/donation-request",
         element: <DonationRequest></DonationRequest>,
       },
       {
-        path: '/blog',
+        path: "/search-page",
+        element: <SearchPage></SearchPage>,
+      },
+      {
+        path: "/blog",
         element: <Blog></Blog>,
       },
       {
-        path: '/founding',
-        element: <PrivateRoute>
-          <Founding></Founding>
-        </PrivateRoute>,
+        path: "/founding",
+        element: (
+          <PrivateRoute>
+            <Founding></Founding>
+          </PrivateRoute>
+        ),
       },
       {
-        path: '/plant/:id',
+        path: "/plant/:id",
         element: <PlantDetails />,
       },
+      {
+  path:'blog',
+  element:<Blog></Blog>
+}
     ],
   },
   {
-     path: '/login', 
-    element: <Login /> ,
+    path: "/login",
+    element: <Login />,
     loader: () => fetch("./Districts.json").then((res) => res.json()),
-    
-  
   },
-  { path: '/signup', 
-    element: <SignUp />,
-    loader:()=>fetch('./Districts.json').then(res=>res.json())
-
-   },
   {
-    path: '/dashboard',
-    element: (
-      
-        <DashboardLayout />
-      
-    ),
+    path: "/signup",
+    element: <SignUp />,
+    loader: () => fetch("./Districts.json").then((res) => res.json()),
+  },
+  {
+    path: "/dashboard",
+    element: <DashboardLayout />,
     children: [
       {
         index: true,
         element: (
-          // <PrivateRoute>
-            <Statistics />
-          //</PrivateRoute> 
+           <PrivateRoute>
+          <Statistics />
+          </PrivateRoute>
         ),
       },
       {
-        path: 'add-plant',
+        path: "manage-orders/donation-details/:id",
+        element:<PrivateRoute>
+           <DonationRequestDetails />
+        </PrivateRoute>,
+      },
+      {
+        path: "add-plant",
         element: (
-          //<PrivateRoute>
-            <AddPlant />
-          //</PrivateRoute>
+          <PrivateRoute>
+          <AddPlant />
+          </PrivateRoute>
         ),
       },
+     {
+      path:'payment-success',
+      element:<PaymentSuccess></PaymentSuccess>
+     },
+
       {
-        path: 'my-inventory',
+        path: "all-users",
         element: (
-          //<PrivateRoute>
-            <MyInventory />
-          //PrivateRoute>
+          <PrivateRoute>
+          <ManageUsers />
+          </PrivateRoute>
         ),
       },
       {
-        path: 'manage-users',
+        path: "profile",
         element: (
-          //<PrivateRoute>
-            <ManageUsers />
-          //</PrivateRoute>
+          <PrivateRoute>
+          <Profile />
+          </PrivateRoute>
         ),
       },
+     
       {
-        path: 'profile',
+        path: "my-donation-request",
         element: (
-          //<PrivateRoute>
-            <Profile />
-//</PrivateRoute>
+          <PrivateRoute>
+          <MyDonationRequest></MyDonationRequest>
+          </PrivateRoute>
         ),
       },
+      // {
+      //   path: 'manage-orders',
+      //   element: <ManageOrders />,
+      // },
       {
-        path: 'my-orders',
-        element: (
-          //<PrivateRoute>
-            <MyOrders />
-          //</PrivateRoute>
-        ),
-      },
-      {
-        path: 'manage-orders',
+        path: "manage-orders",
         element: <ManageOrders />,
       },
     ],
   },
-])
+]);

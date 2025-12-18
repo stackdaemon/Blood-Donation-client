@@ -2,10 +2,13 @@ import { Link, useLoaderData, useLocation, useNavigate } from "react-router";
 import { useForm } from "react-hook-form";
 import useAuth from "../../hooks/useAuth";
 import toast from "react-hot-toast";
+import { imageUploadCloudinary } from "../../utils";
+import axios from "axios";
+import LoadingSpinner from './../../components/Shared/LoadingSpinner';
 
 const SignUp = () => {
   const navigate = useNavigate();
-  const { createUser, updateUserProfile, loading } = useAuth();
+  const { createUser, updateUserProfile, loading, } = useAuth();
   const data = useLoaderData();
   const location = useLocation();
   const from = location.state || "/";
@@ -24,33 +27,60 @@ const SignUp = () => {
     data.find((d) => d.name === selectedDistrict)?.upazilas || [];
 
   const onSubmit = async (data) => {
-    const { name, image, email, password } = data;
-    const imageFile =image[0]
-    console.log(imageFile)
+    const { name, image, email, password, bloodGroup, district, upazila } =
+      data;
 
-     try {
+    const imageFile = image[0];
+
+    try {
+      // IMAGE upload
+      const cloudinaryImageUrl = await imageUploadCloudinary(imageFile);
+      console.log(cloudinaryImageUrl);
       //2. User Registration
-      const result = await createUser(email, password)
+      const result = await createUser(email, password);
+      // 4.save the data in db
+      try {
+        const userInfo = {
+      name,
+      email,
+      image: cloudinaryImageUrl,
+      blood_group: bloodGroup,
+      district,
+      upazila,
+      role: "donor",
+      status: "active",
+      createdAt: new Date().toISOString(),
+    };
 
+    // 4️⃣ Save to MongoDB  🔥🔥
+    const res = await axios.post(
+      `${import.meta.env.VITE_API_URL}/users`,
+      userInfo
+    );
+
+    console.log("MongoDB Response:", res.data);
+        
+      } catch (error) {
+        console.log(error)
+      }
+
+ 
       //3. Save username & profile photo
-      await updateUserProfile(
-        name,
-        'https://lh3.googleusercontent.com/a/ACg8ocKUMU3XIX-JSUB80Gj_bYIWfYudpibgdwZE1xqmAGxHASgdvCZZ=s96-c'
-      )
-      console.log(result)
-
-      navigate(from, { replace: true })
-      toast.success('Signup Successful')
+      await updateUserProfile(name, cloudinaryImageUrl);
+      console.log(result);
+      // 5.Navigate part
+      navigate(from, { replace: true });
+      toast.success("Signup Successful");
     } catch (err) {
-      console.log(err)
-      toast.error(err?.message)
+      console.log(err);
+      toast.error(err?.message);
     }
-  
   };
 
   const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
   const password = watch("password");
+  if(loading) return <LoadingSpinner></LoadingSpinner>
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-red-50 px-4">

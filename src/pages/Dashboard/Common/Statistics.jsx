@@ -2,7 +2,9 @@ import AdminStatistics from '../../../components/Dashboard/Statistics/AdminStati
 const Statistics = () => {
   return (
     <div>
-      <AdminStatistics />
+      {/* donor  */}
+      <AdminStatistics /> 
+      {/* <AdminStatistics /> // admin */}
     </div>
   )
 }
