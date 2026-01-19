@@ -16,7 +16,7 @@ const PaymentSuccess = () => {
 
   const name = nameParam ? decodeURIComponent(nameParam) : "";
   const email = emailParam ? decodeURIComponent(emailParam) : "";
-  const amount = amountParam ? Number(amountParam) : 0; // ✅ number
+  const amount = amountParam ? Number(amountParam) : 0; // 
 
   const displayName = name || user?.displayName || "Anonymous";
   const displayEmail = email || user?.email || "N/A";
@@ -37,9 +37,9 @@ const PaymentSuccess = () => {
         setSaved(true);
         toast.success("Payment Successful 🎉");
 
-        setTimeout(() => {
-          navigate("/funding");
-        }, 2000);
+        // setTimeout(() => {
+        //   navigate("/funding");
+        // }, 2000);
       } catch (err) {
         console.error(err);
         toast.error("Payment done but save failed");
@@ -78,7 +78,7 @@ const PaymentSuccess = () => {
         )}
 
         <button
-          onClick={() => navigate("/funding")}
+          onClick={() => navigate("/founding")}
           className="mt-6 w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-xl font-semibold"
         >
           Go to Funding Page

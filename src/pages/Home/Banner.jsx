@@ -29,7 +29,7 @@ const Banner = () => {
 
           {/* Search Donors (Border Animation + Scale) */}
           <Link
-            to="/search"
+            to="/search-page"
             className="relative border border-red-600 text-red-600 font-semibold px-8 py-3 rounded-full 
             overflow-hidden transition-all duration-300 transform hover:scale-105"
           >

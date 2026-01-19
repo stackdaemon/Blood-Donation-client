@@ -10,14 +10,14 @@ const DonationRequestDetails = () => {
   const location = useLocation();
   const { user } = useAuth();
 
-  const mode = location.state?.mode || "view"; // "view" বা "edit"
+  const mode = location.state?.mode || "view"; 
 
   const [request, setRequest] = useState(null);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [updating, setUpdating] = useState(false);
 
-  // 🔹 Fetch single donation request
+  // Fetch single donation request
   useEffect(() => {
     const fetchRequest = async () => {
       try {
@@ -35,7 +35,7 @@ const DonationRequestDetails = () => {
     fetchRequest();
   }, [id]);
 
-  // 🔹 Donate Confirm
+  //  Donate Confirm
   const handleDonateConfirm = async () => {
     try {
       const token = await user.getIdToken();
@@ -62,11 +62,11 @@ const DonationRequestDetails = () => {
     }
   };
 
-  // 🔹 Update request (edit mode)
+  //  Update request (edit mode)
  const handleUpdate = async () => {
   setUpdating(true);
   try {
-    const { _id, ...updateData } = request; // ✅ _id বাদ
+    const { _id, ...updateData } = request; 
 
     await axios.patch(
       `${import.meta.env.VITE_API_URL}/donation-requests/${id}`,

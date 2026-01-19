@@ -1,18 +1,19 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
 
-const ManageUsers = () => {
+const AllUsers = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState("all");
 
-  // 🔹 get users from backend
+  // get users from backend
   useEffect(() => {
     const getUsers = async () => {
       try {
         const { data } = await axios.get(
           `${import.meta.env.VITE_API_URL}/users`
         );
-        setUsers(data); // 🔥 dynamic data
+        setUsers(data);
         setLoading(false);
       } catch (error) {
         console.error(error);
@@ -23,14 +24,15 @@ const ManageUsers = () => {
     getUsers();
   }, []);
 
-  // 🔹 frontend only (later backend API will be added)
+  // frontend only (later backend API will be added)
   const toggleBlock = async (id, currentStatus) => {
     const newStatus = currentStatus === "blocked" ? "active" : "blocked";
 
     try {
-      await axios.patch(`${import.meta.env.VITE_API_URL}/users/${id}/status`, {
-        status: newStatus,
-      });
+      await axios.patch(
+        `${import.meta.env.VITE_API_URL}/users/${id}/status`,
+        { status: newStatus }
+      );
 
       setUsers((prev) =>
         prev.map((user) =>
@@ -45,9 +47,10 @@ const ManageUsers = () => {
 
   const changeRole = async (id, role) => {
     try {
-      await axios.patch(`${import.meta.env.VITE_API_URL}/users/${id}/role`, {
-        role,
-      });
+      await axios.patch(
+        `${import.meta.env.VITE_API_URL}/users/${id}/role`,
+        { role }
+      );
 
       setUsers((prev) =>
         prev.map((user) => (user._id === id ? { ...user, role } : user))
@@ -57,6 +60,12 @@ const ManageUsers = () => {
       alert("Failed to update role");
     }
   };
+
+  // filtering users by status (active / blocked)
+  const filteredUsers = users.filter((user) => {
+    if (statusFilter === "all") return true;
+    return (user.status || "active") === statusFilter;
+  });
 
   if (loading) {
     return (
@@ -68,9 +77,22 @@ const ManageUsers = () => {
 
   return (
     <div className="p-6 bg-red-50 min-h-screen">
-      <h2 className="text-3xl font-bold mb-6 text-center text-red-700">
+      <h2 className="text-3xl font-bold mb-4 text-center text-red-700">
         All Users
       </h2>
+
+      {/* Status Filter */}
+      <div className="mb-4 flex justify-end">
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="border px-3 py-2 rounded focus:outline-none"
+        >
+          <option value="all">All Users</option>
+          <option value="active">Active</option>
+          <option value="blocked">Blocked</option>
+        </select>
+      </div>
 
       <div className="overflow-x-auto shadow-lg rounded-lg bg-white">
         <table className="min-w-full">
@@ -86,7 +108,7 @@ const ManageUsers = () => {
           </thead>
 
           <tbody>
-            {users.map((user) => (
+            {filteredUsers.map((user) => (
               <tr
                 key={user._id}
                 className="border-b hover:bg-gray-50 transition duration-150"
@@ -106,7 +128,9 @@ const ManageUsers = () => {
                 <td className="py-3 px-4">
                   <span
                     className={`px-2 py-1 rounded-full text-white text-sm ${
-                      user.status === "blocked" ? "bg-red-500" : "bg-green-500"
+                      (user.status || "active") === "blocked"
+                        ? "bg-red-500"
+                        : "bg-green-500"
                     }`}
                   >
                     {user.status || "active"}
@@ -117,12 +141,14 @@ const ManageUsers = () => {
                   <button
                     onClick={() => toggleBlock(user._id, user.status)}
                     className={`px-3 py-1 rounded text-white text-sm ${
-                      user.status === "blocked"
+                      (user.status || "active") === "blocked"
                         ? "bg-green-500 hover:bg-green-600"
                         : "bg-red-500 hover:bg-red-600"
                     }`}
                   >
-                    {user.status === "blocked" ? "Unblock" : "Block"}
+                    {(user.status || "active") === "blocked"
+                      ? "Unblock"
+                      : "Block"}
                   </button>
 
                   <button
@@ -142,7 +168,7 @@ const ManageUsers = () => {
               </tr>
             ))}
 
-            {users.length === 0 && (
+            {filteredUsers.length === 0 && (
               <tr>
                 <td colSpan="6" className="text-center py-6 text-gray-500">
                   No users found
@@ -156,4 +182,4 @@ const ManageUsers = () => {
   );
 };
 
-export default ManageUsers;
+export default AllUsers;

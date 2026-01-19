@@ -1,41 +1,51 @@
 import axios from "axios";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import useAuth from "../../hooks/useAuth";
 import { toast } from "react-hot-toast";
 import { useMutation } from "@tanstack/react-query";
 import LoadingSpinner from "../Shared/LoadingSpinner";
-import { useEffect } from "react";
-import { useState } from "react";
-const AddPlantForm = () => {
-  const [users, setUsers] = useState([]);
-  const [userStatus, setUserStatus] = useState("");
+import { useEffect, useState } from "react";
+// import { useLoaderData } from "react-router";
 
+const AddPlantForm = () => {
+  // const data = useLoaderData();
+  const [data,setData]=useState([])
+  useEffect(()=>{
+    axios.get('/Districts.json').then(res =>setData(res.data)).catch(err=>console.log(err))
+  },[])
+  console.log(data) 
+
+  const [userStatus, setUserStatus] = useState("");
   const { user, loading } = useAuth();
-  const { register, handleSubmit, reset } = useForm();
+
+  const { register, handleSubmit, control, reset, watch, setValue } = useForm({
+    defaultValues: {
+      district: "",
+      recipient_upazila: "",
+    },
+  });
+
+  const selectedDistrict = watch("district");
+  const filteredUpazilas =
+    data.find((d) => d.name === selectedDistrict)?.upazilas || [];
+
+
+  // Check user status
   useEffect(() => {
-    const getUsers = async () => {
+    const getUserStatus = async () => {
       try {
-        const { data } = await axios.get(
+        const { data: usersData } = await axios.get(
           `${import.meta.env.VITE_API_URL}/users`
         );
-
-        // 🔥 current logged in user খোঁজা
-        const currentUser = data.find((u) => u.email === user?.email);
-
-        if (currentUser) {
-          setUserStatus(currentUser.status);
-        }
-      } catch (error) {
-        console.error(error);
+        const currentUser = usersData.find((u) => u.email === user?.email);
+        if (currentUser) setUserStatus(currentUser.status);
+      } catch (err) {
+        console.error(err);
       }
     };
-
-    if (user?.email) {
-      getUsers();
-    }
+    if (user?.email) getUserStatus();
   }, [user]);
 
-  //  Mutation using mutateAsync
   const donationMutation = useMutation({
     mutationFn: async (donationRequest) => {
       const response = await axios.post(
@@ -46,7 +56,7 @@ const AddPlantForm = () => {
     },
   });
 
-  const onSubmit = async (data) => {
+  const onSubmit = async (formData) => {
     if (userStatus === "blocked") {
       toast.error("You are blocked. You cannot create donation request.");
       return;
@@ -55,13 +65,14 @@ const AddPlantForm = () => {
     const donationRequest = {
       requesterName: user?.displayName,
       requesterEmail: user?.email,
-      recipientUpazila: data.recipient_upazila,
-      hospitalName: data.hospital_name,
-      fullAddress: data.full_address,
-      bloodGroup: data.blood_group,
-      donationDate: data.donation_date,
-      donationTime: data.donation_time,
-      requestMessage: data.request_message,
+      recipientUpazila: formData.recipient_upazila,
+      district: formData.district,
+      hospitalName: formData.hospital_name,
+      fullAddress: formData.full_address,
+      bloodGroup: formData.blood_group,
+      donationDate: formData.donation_date,
+      donationTime: formData.donation_time,
+      requestMessage: formData.request_message,
     };
 
     try {
@@ -75,7 +86,7 @@ const AddPlantForm = () => {
     }
   };
 
-  if (loading) return <LoadingSpinner></LoadingSpinner>;
+  if (loading) return <LoadingSpinner />;
 
   return (
     <div className="min-h-screen bg-gradient-to-r from-red-50 to-red-100 flex items-center justify-center p-4">
@@ -90,9 +101,7 @@ const AddPlantForm = () => {
         >
           {/* Requester Name */}
           <div className="col-span-2">
-            <label className="font-semibold text-gray-700">
-              Requester Name
-            </label>
+            <label className="font-semibold text-gray-700">Requester Name</label>
             <input
               readOnly
               value={user?.displayName || ""}
@@ -102,9 +111,7 @@ const AddPlantForm = () => {
 
           {/* Requester Email */}
           <div className="col-span-2">
-            <label className="font-semibold text-gray-700">
-              Requester Email
-            </label>
+            <label className="font-semibold text-gray-700">Requester Email</label>
             <input
               readOnly
               value={user?.email || ""}
@@ -112,15 +119,55 @@ const AddPlantForm = () => {
             />
           </div>
 
+          {/* District */}
+          <div>
+            <label className="font-semibold text-gray-700">District</label>
+            <Controller
+              control={control}
+              name="district"
+              rules={{ required: true }}
+              render={({ field }) => (
+                <select
+                  {...field}
+                  onChange={(e) => {
+                    field.onChange(e);
+                    // reset upazila when district changes
+                    setValue("recipient_upazila", "");
+                  }}
+                  className="w-full border border-gray-300 rounded-xl p-3 mt-1"
+                >
+                  <option value="">Select District</option>
+                  {data.map((d) => (
+                    <option key={d.id} value={d.name}>
+                      {d.name}
+                    </option>
+                  ))}
+                </select>
+              )}
+            />
+          </div>
+
           {/* Recipient Upazila */}
           <div>
-            <label className="font-semibold text-gray-700">
-              Recipient Upazila
-            </label>
-            <input
-              {...register("recipient_upazila", { required: true })}
-              className="w-full border border-gray-300 rounded-xl p-3 mt-1"
-              placeholder="Upazila"
+            <label className="font-semibold text-gray-700">Recipient Upazila</label>
+            <Controller
+              control={control}
+              name="recipient_upazila"
+              rules={{ required: true }}
+              render={({ field }) => (
+                <select
+                  {...field}
+                  className="w-full border border-gray-300 rounded-xl p-3 mt-1"
+                  disabled={!selectedDistrict}
+                >
+                  <option value="">Select Upazila</option>
+                  {filteredUpazilas.map((u) => (
+                    <option key={u.id} value={u.name}>
+                      {u.name}
+                    </option>
+                  ))}
+                </select>
+              )}
             />
           </div>
 
@@ -185,9 +232,7 @@ const AddPlantForm = () => {
 
           {/* Request Message */}
           <div className="col-span-2">
-            <label className="font-semibold text-gray-700">
-              Request Message
-            </label>
+            <label className="font-semibold text-gray-700">Request Message</label>
             <textarea
               {...register("request_message", { required: true })}
               className="w-full border border-gray-300 rounded-xl p-3 mt-1"
@@ -200,13 +245,11 @@ const AddPlantForm = () => {
             <button
               type="submit"
               disabled={userStatus === "blocked"}
-              className={`w-full font-bold py-3 rounded-xl transition 
-    ${
-      userStatus === "blocked"
-        ? "bg-gray-400 cursor-not-allowed"
-        : "bg-red-600 hover:bg-red-700 text-white"
-    }
-  `}
+              className={`w-full font-bold py-3 rounded-xl transition ${
+                userStatus === "blocked"
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-red-600 hover:bg-red-700 text-white"
+              }`}
             >
               Submit Request
             </button>

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import useAuth from "../../../hooks/useAuth";
 import axios from "axios";
-import { Link, useNavigate } from "react-router";
+import { useNavigate } from "react-router";
 import toast from "react-hot-toast";
 
 const MyDonationRequests = () => {
@@ -10,11 +10,12 @@ const MyDonationRequests = () => {
   const [filter, setFilter] = useState("all");
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  // Pagination
-  const [page, setPage] = useState(1);
-  const [pageSize] = useState(); // items per page
 
-  // Fetch donation requests for logged-in user
+  // Frontend Pagination
+  const [page, setPage] = useState(1);
+  const pageSize = 5;
+
+  // Fetch ALL data from backend
   useEffect(() => {
     const fetchRequests = async () => {
       try {
@@ -25,138 +26,111 @@ const MyDonationRequests = () => {
             params: {
               email: user?.email,
               status: filter !== "all" ? filter : undefined,
-              limit: pageSize,
             },
           }
         );
         setRequests(data);
+        setPage(1); // reset page when filter changes
       } catch (error) {
-        console.error("Error fetching donation requests:", error);
+        console.error(error);
       } finally {
         setLoading(false);
       }
     };
- 
 
     if (user?.email) fetchRequests();
-  }, [user?.email, filter, page, pageSize]);
-    const handleDelete = async (id) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this donation request?"
-    );
-    if (!confirmDelete) return;
+  }, [user?.email, filter]);
+
+  // Pagination calculation
+  const totalPages = Math.ceil(requests.length / pageSize);
+  const startIndex = (page - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const paginatedRequests = requests.slice(startIndex, endIndex);
+
+  // Delete
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure?")) return;
 
     try {
       await axios.delete(
         `${import.meta.env.VITE_API_URL}/donation-requests/${id}`
       );
       setRequests((prev) => prev.filter((req) => req._id !== id));
-      toast.success('Delete Sucessful')
-    } catch (err) {
-      console.error("Error deleting donation request:", err);
+      toast.success("Deleted");
+    } catch {
+      toast.error("Delete failed");
     }
   };
-  if (loading) return <p>Loading...</p>;
-  console.log(requests);
+
+  if (loading) return <p className="text-center">Loading...</p>;
+
   return (
     <div className="p-6">
       <h1 className="text-3xl font-bold mb-6 text-center">
         My Donation Requests
       </h1>
 
-      {/* Filter Buttons */}
-      <div className="flex flex-wrap justify-center gap-3 mb-6">
+      {/* Filter */}
+      <div className="flex justify-center gap-2 mb-6">
         {["all", "pending", "inprogress", "done", "canceled"].map((f) => (
           <button
             key={f}
-            className={`btn btn-sm ${
-              filter === f
-                ? f === "all"
-                  ? "btn-neutral"
-                  : f === "pending"
-                  ? "btn-warning"
-                  : f === "inprogress"
-                  ? "btn-primary"
-                  : f === "done"
-                  ? "btn-success"
-                  : "btn-error"
-                : ""
-            }`}
+            className={`btn btn-sm ${filter === f ? "btn-primary" : ""}`}
             onClick={() => setFilter(f)}
           >
-            {f.charAt(0).toUpperCase() + f.slice(1)}
+            {f}
           </button>
         ))}
       </div>
 
-      {/* Requests Table */}
+      {/* Table */}
       <div className="bg-white shadow-md rounded-xl p-6">
         <div className="overflow-x-auto">
           <table className="table w-full">
             <thead>
-              <tr className="bg-gray-100">
+              <tr>
                 <th>#</th>
                 <th>Recipient</th>
                 <th>Blood</th>
                 <th>Date</th>
                 <th>Status</th>
-                <th className="text-center">Actions</th>
+                <th>Actions</th>
               </tr>
             </thead>
 
             <tbody>
-              {requests.map((req, idx) => (
+              {paginatedRequests.map((req, idx) => (
                 <tr key={req._id}>
-                  <td>{idx + 1}</td>
-                  <td className="font-semibold">{req.recipientName}</td>
+                  <td>{startIndex + idx + 1}</td>
+                  <td>{req.requesterName}</td>
                   <td>{req.bloodGroup}</td>
                   <td>{req.donationDate}</td>
                   <td>
-                    {req.status === "pending" && (
-                      <span className="badge badge-warning">Pending</span>
-                    )}
-                    {req.status === "inprogress" && (
-                      <span className="badge badge-primary">InProgress</span>
-                    )}
-                    {req.status === "done" && (
-                      <span className="badge badge-success">Done</span>
-                    )}
-                    {req.status === "canceled" && (
-                      <span className="badge badge-error">Canceled</span>
-                    )}
+                    <span className="badge">{req.status}</span>
                   </td>
-                     <td className="flex gap-2">
-                    {/* Details Button */}
+                  <td className="flex gap-2">
                     <button
                       className="btn btn-info btn-sm"
                       onClick={() =>
                         navigate(
-                          `/dashboard/manage-orders/donation-details/${req._id}`,
-                          {
-                            state: { mode: "view" },
-                          }
+                          `/dashboard/all-users/donation-details/${req._id}`,
+                          { state: { mode: "view" } }
                         )
                       }
                     >
-                      Details
+                      View
                     </button>
-
-                    {/* Edit Button */}
                     <button
                       className="btn btn-warning btn-sm"
                       onClick={() =>
                         navigate(
-                          `/dashboard/manage-orders/donation-details/${req._id}`,
-                          {
-                            state: { mode: "edit" },
-                          }
+                          `/dashboard/all-users/donation-details/${req._id}`,
+                          { state: { mode: "edit" } }
                         )
                       }
                     >
                       Edit
                     </button>
-
-                    {/* Delete Button */}
                     <button
                       className="btn btn-error btn-sm"
                       onClick={() => handleDelete(req._id)}
@@ -166,22 +140,35 @@ const MyDonationRequests = () => {
                   </td>
                 </tr>
               ))}
+
+              {paginatedRequests.length === 0 && (
+                <tr>
+                  <td colSpan="6" className="text-center">
+                    No data found
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
 
-          {/* Pagination (simple example) */}
-          <div className="flex justify-center mt-8 gap-2">
+          {/* Pagination Buttons */}
+          <div className="flex justify-center gap-3 mt-6">
             <button
               className="btn btn-sm"
               disabled={page === 1}
-              onClick={() => setPage((p) => p - 1)}
+              onClick={() => setPage(page - 1)}
             >
               « Prev
             </button>
-            <span className="btn btn-sm btn-disabled">{page}</span>
+
+            <span className="btn btn-sm btn-disabled">
+              Page {page} / {totalPages}
+            </span>
+
             <button
               className="btn btn-sm"
-              onClick={() => setPage((p) => p + 1)}
+              disabled={page === totalPages}
+              onClick={() => setPage(page + 1)}
             >
               Next »
             </button>

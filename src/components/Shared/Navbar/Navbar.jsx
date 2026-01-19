@@ -55,7 +55,7 @@ console.log(image)
             </Link>
 
             {user && (
-              <Link to='/funding' className='hover:text-red-600 transition'>
+              <Link to='/founding' className='hover:text-red-600 transition'>
                 Funding
               </Link>
             )}
@@ -76,7 +76,7 @@ console.log(image)
                 <img
                   className='rounded-full'
                   referrerPolicy='no-referrer'
-                  src={user?.photoURL ? image : avatarImg}
+                  src={user?.photoURL ? user?.photoURL || image: avatarImg}
                   // src={users? users?.image || user?.image :avatarImg  }
                   alt='profile'
                   height='30'

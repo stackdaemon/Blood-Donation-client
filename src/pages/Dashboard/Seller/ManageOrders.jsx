@@ -30,7 +30,7 @@ const ManageOrders = () => {
     if (!user) {
       navigate("/login");
     } else {
-     navigate(`/dashboard/manage-orders/donation-details/${id}`);
+      navigate(`/dashboard/all-users/donation-details/${id}`);
     }
   };
 
@@ -73,7 +73,7 @@ const ManageOrders = () => {
                   <b>Time:</b> {req.donationTime}
                 </p>
 
-                <Link to={`donation-details/${req._id}`}>
+                <Link to={`/dashboard/all-users/donation-details/${req._id}`}>
                   <button
                     onClick={() => handleView(req._id)}
                     className="w-full bg-red-500 text-white rounded-xl py-2 font-semibold hover:bg-red-600"

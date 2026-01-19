@@ -6,7 +6,7 @@ import PlantDetails from "../pages/donation-details/DonationRequestDetails ";
 import PrivateRoute from "./PrivateRoute";
 import DashboardLayout from "../layouts/DashboardLayout";
 import AddPlant from "../pages/Dashboard/Seller/AddPlant";
-import ManageUsers from "../pages/Dashboard/Admin/ManageUsers";
+import ManageUsers from "../pages/Dashboard/Admin/AllUsers";
 import Profile from "../pages/Dashboard/Common/Profile";
 import Statistics from "../pages/Dashboard/Common/Statistics";
 import MainLayout from "../layouts/MainLayout";
@@ -18,7 +18,10 @@ import Founding from "../components/Shared/MenuLinks/Founding";
 import MyDonationRequest from "../pages/Dashboard/Customer/MyDonationRequest";
 import SearchPage from "../components/Shared/Navbar/SearchPage";
 import DonationRequestDetails from "../components/Dashboard/DonationDetails/DonationRequestDetails";
-import PaymentSuccess from '../components/Dashboard/Payment/PaymentSuccess'
+import PaymentSuccess from "../components/Dashboard/Payment/PaymentSuccess";
+import DetailsJust from "../components/Dashboard/DonationDetails/DetailsJust";
+import AllUsers from "../pages/Dashboard/Admin/AllUsers";
+import AdminRoute from "./AdminRoute";
 
 export const router = createBrowserRouter([
   {
@@ -37,13 +40,14 @@ export const router = createBrowserRouter([
       {
         path: "/search-page",
         element: <SearchPage></SearchPage>,
+        loader: () => fetch("./Districts.json").then((res) => res.json()),
       },
       {
         path: "/blog",
         element: <Blog></Blog>,
       },
       {
-        path: "/funding",
+        path: "/founding",
         element: (
           <PrivateRoute>
             <Founding></Founding>
@@ -55,26 +59,24 @@ export const router = createBrowserRouter([
         element: <PlantDetails />,
       },
       {
-  path:'blog',
-  element:<Blog></Blog>
-}
-,{
-      path:'payment-success',
-      element:
-        <PaymentSuccess></PaymentSuccess>
-      
-     },
+        path: "blog",
+        element: <Blog></Blog>,
+      },
+      {
+        path: "payment-success",
+        element: <PaymentSuccess></PaymentSuccess>,
+      },
     ],
   },
   {
     path: "/login",
     element: <Login />,
-    loader: () => fetch("./Districts.json").then((res) => res.json()),
+    // loader: () => fetch("./Districts.json").then((res) => res.json()),
   },
   {
     path: "/signup",
     element: <SignUp />,
-    loader: () => fetch("./Districts.json").then((res) => res.json()),
+    loader: () => fetch("/Districts.json").then((res) => res.json()),
   },
   {
     path: "/dashboard",
@@ -83,32 +85,41 @@ export const router = createBrowserRouter([
       {
         index: true,
         element: (
-           <PrivateRoute>
-          <Statistics />
+          <PrivateRoute>
+            <Statistics />
           </PrivateRoute>
         ),
       },
       {
-        path: "manage-orders/donation-details/:id",
-        element:<PrivateRoute>
-           <DonationRequestDetails />
-        </PrivateRoute>,
+        path: "all-users/donation-details/:id",
+        element: (
+          <PrivateRoute>
+            <DonationRequestDetails />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "all-users/details-just/:id",
+        element: (
+          <PrivateRoute>
+            <DetailsJust></DetailsJust>
+          </PrivateRoute>
+        ),
       },
       {
         path: "add-plant",
         element: (
           <PrivateRoute>
-          <AddPlant />
+            <AddPlant />
           </PrivateRoute>
         ),
       },
-     
 
       {
         path: "all-users",
         element: (
           <PrivateRoute>
-          <ManageUsers />
+            <ManageUsers />
           </PrivateRoute>
         ),
       },
@@ -116,23 +127,30 @@ export const router = createBrowserRouter([
         path: "profile",
         element: (
           <PrivateRoute>
-          <Profile />
+            <Profile />
           </PrivateRoute>
         ),
       },
-     
+
       {
         path: "my-donation-request",
         element: (
           <PrivateRoute>
-          <MyDonationRequest></MyDonationRequest>
+            <MyDonationRequest></MyDonationRequest>
           </PrivateRoute>
         ),
       },
-      
+
       {
-        path: "manage-orders",
-        element: <PrivateRoute><ManageOrders /></PrivateRoute>,
+        path: "all-users",
+        element: (
+          <PrivateRoute>
+            <AdminRoute>
+            <AllUsers></AllUsers>
+
+            </AdminRoute>
+          </PrivateRoute>
+        ),
       },
     ],
   },

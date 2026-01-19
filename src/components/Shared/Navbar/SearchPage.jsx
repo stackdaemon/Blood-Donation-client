@@ -1,6 +1,7 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
 import useAuth from "../../../hooks/useAuth";
+import { useLoaderData } from "react-router";
 
 const SearchPage = () => {
   const { setLoading } = useAuth();
@@ -9,9 +10,9 @@ const SearchPage = () => {
   const [upazila, setUpazila] = useState("");
   const [results, setResults] = useState([]);
   const [requests, setRequests] = useState([]);
+  const data = useLoaderData();
 
-  const districts = ["Dhaka", "Chattogram", "Khulna", "Rajshahi"];
-  const upazilas = ["Savar", "Dhanmondi", "Gulshan", "Pahartali"];
+  // Blood groups
   const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
   // Fetch donation requests from backend
@@ -22,8 +23,8 @@ const SearchPage = () => {
         const res = await axios.get(
           `${import.meta.env.VITE_API_URL}/donation-requests?status=pending`
         );
-        setRequests(res.data);
-        setResults(res.data); // Initially show all pending requests
+        setRequests(res.data); // keep all requests for filtering
+        setResults([]); // start with empty results
       } catch (error) {
         console.error(error);
       } finally {
@@ -58,6 +59,7 @@ const SearchPage = () => {
           onSubmit={handleSearch}
           className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8"
         >
+          {/* Blood Group */}
           <select
             value={bloodGroup}
             onChange={(e) => setBloodGroup(e.target.value)}
@@ -71,32 +73,41 @@ const SearchPage = () => {
             ))}
           </select>
 
+          {/* District */}
           <select
             value={district}
-            onChange={(e) => setDistrict(e.target.value)}
+            onChange={(e) => {
+              setDistrict(e.target.value);
+              setUpazila(""); // reset upazila when district changes
+            }}
             className="p-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-red-300"
           >
             <option value="">District</option>
-            {districts.map((d) => (
-              <option key={d} value={d}>
-                {d}
+            {data.map((d) => (
+              <option key={d.id} value={d.name}>
+                {d.name}
               </option>
             ))}
           </select>
 
+          {/* Upazila */}
           <select
             value={upazila}
             onChange={(e) => setUpazila(e.target.value)}
             className="p-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-red-300"
+            disabled={!district}
           >
             <option value="">Upazila</option>
-            {upazilas.map((u) => (
-              <option key={u} value={u}>
-                {u}
-              </option>
-            ))}
+            {data
+              .find((d) => d.name === district)
+              ?.upazilas.map((u) => (
+                <option key={u.id} value={u.name}>
+                  {u.name}
+                </option>
+              ))}
           </select>
 
+          {/* Search Button */}
           <button
             type="submit"
             className="bg-gradient-to-r from-red-500 to-pink-500 text-white font-bold rounded-xl shadow-lg hover:scale-105 transform transition py-3"
@@ -108,7 +119,7 @@ const SearchPage = () => {
         {/* Results */}
         {results.length === 0 ? (
           <p className="text-center text-gray-500 text-lg">
-            No donors found. Try adjusting your filters.
+            No donors found. Fill the search form and click Search.
           </p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -129,16 +140,20 @@ const SearchPage = () => {
                   </div>
                 </div>
                 <p className="text-gray-600">
-                  <span className="font-semibold">District:</span> {req.district || "N/A"}
+                  <span className="font-semibold">District:</span>{" "}
+                  {req.district || "N/A"}
                 </p>
                 <p className="text-gray-600">
-                  <span className="font-semibold">Upazila:</span> {req.recipientUpazila}
+                  <span className="font-semibold">Upazila:</span>{" "}
+                  {req.recipientUpazila || "N/A"}
                 </p>
                 <p className="text-gray-600 mt-2">
-                  <span className="font-semibold">Hospital:</span> {req.hospitalName}
+                  <span className="font-semibold">Hospital:</span>{" "}
+                  {req.hospitalName || "N/A"}
                 </p>
                 <p className="text-gray-600 mt-2">
-                  <span className="font-semibold">Address:</span> {req.fullAddress}
+                  <span className="font-semibold">Address:</span>{" "}
+                  {req.fullAddress || "N/A"}
                 </p>
                 <button className="mt-4 w-full bg-red-500 text-white rounded-xl py-2 font-semibold hover:bg-red-600 transition">
                   Contact
